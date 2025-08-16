@@ -61,9 +61,16 @@ async def analyze_pdf(file: UploadFile = File(...)):
         if not file.filename.lower().endswith('.pdf'):
             raise HTTPException(status_code=400, detail="Only PDF files are supported")
         
+        # Read file content
+        content = await file.read()
+        
+        # Validate file size (20MB limit)
+        max_size = 20 * 1024 * 1024  # 20MB in bytes
+        if len(content) > max_size:
+            raise HTTPException(status_code=400, detail="File size must be less than 20MB")
+        
         # Save uploaded file temporarily
         with tempfile.NamedTemporaryFile(delete=False, suffix='.pdf') as temp_file:
-            content = await file.read()
             temp_file.write(content)
             temp_file_path = temp_file.name
         
@@ -74,7 +81,7 @@ async def analyze_pdf(file: UploadFile = File(...)):
             
             # Analyze for IPO readiness
             logger.info("Analyzing IPO readiness")
-            analysis_result = await ipo_analyzer.analyze(
+            analysis_result = await ipo_analyzer.analyse(
                 content=extracted_content,
                 filename=file.filename
             )

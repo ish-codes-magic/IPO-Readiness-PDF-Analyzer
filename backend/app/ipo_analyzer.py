@@ -4,13 +4,15 @@ import time
 import uuid
 from typing import Dict, Any, List
 from jinja2 import Environment, FileSystemLoader
-import google.generativeai as genai
-from instructor import from_gemini
+import instructor
+from instructor import Mode
 from pydantic import BaseModel, Field
+from dotenv import load_dotenv
+from google.genai import Client, types
 
 from .models.response_models import (
     IPOAnalysisResponse, CriterionScore, ExecutiveSummary, 
-    RiskAssessment, FollowUpQuestions, CompanyMetadata
+    RiskAssessment, FollowUpQuestions, CompanyMetadata, StructuredAnalysis
 )
 
 logger = logging.getLogger(__name__)
@@ -27,14 +29,13 @@ class IPOAnalyzer:
         if not api_key:
             raise ValueError("GEMINI_API_KEY environment variable is required")
         
-        genai.configure(api_key=api_key)
-        
+        self.genai_client = Client(api_key=api_key)
+         
         # Initialize Gemini model with Instructor
-        self.model = from_gemini(
-            client=genai.GenerativeModel("gemini-2.5-flash"),
-            mode="json"
+        self.model = instructor.from_genai(
+            client=self.genai_client,
+            mode=Mode.GENAI_STRUCTURED_OUTPUTS
         )
-        
         # Initialize Jinja2 template environment
         template_dir = os.path.join(os.path.dirname(os.path.dirname(__file__)), "prompts")
         self.jinja_env = Environment(loader=FileSystemLoader(template_dir))
@@ -83,7 +84,7 @@ class IPOAnalyzer:
             }
         ]
     
-    async def analyze(self, content: Dict[str, Any], filename: str) -> IPOAnalysisResponse:
+    async def analyse(self, content: Dict[str, Any], filename: str) -> IPOAnalysisResponse:
         """
         Analyze extracted PDF content for IPO readiness
         
@@ -164,7 +165,7 @@ class IPOAnalyzer:
         return template.render(
             filename=filename,
             full_text=content.get("full_text", ""),
-            sections=content.get("sections", {}),
+            # sections=content.get("sections", {}),
             tables=content.get("tables", []),
             metadata=content.get("metadata", {})
         )
@@ -173,23 +174,13 @@ class IPOAnalyzer:
         """
         Get structured analysis from Gemini using Instructor
         """
-        # Define the structured response model for Instructor
-        class StructuredAnalysis(BaseModel):
-            company_metadata: CompanyMetadata
-            overall_ipo_score: float = Field(..., ge=0, le=100)
-            criterion_scores: List[CriterionScore]
-            executive_summary: ExecutiveSummary
-            risk_assessment: RiskAssessment
-            follow_up_questions: FollowUpQuestions
-            financial_highlights: Dict[str, Any] = Field(default_factory=dict)
-            competitive_positioning: str
-            confidence_score: float = Field(..., ge=0, le=1)
         
         try:
             # Use Instructor to get structured response
-            response = self.model.create(
+            response = await self.model.create(
                 messages=[{"role": "user", "content": prompt}],
                 response_model=StructuredAnalysis,
+                model="gemini-2.5-flash",
                 max_retries=3
             )
             
@@ -206,13 +197,15 @@ class IPOAnalyzer:
         """
         try:
             # Simple text generation as fallback
-            model = genai.GenerativeModel("gemini-1.5-pro")
-            response = model.generate_content(
-                prompt + "\n\nPlease provide a brief analysis with scores for each criterion."
+            from google.genai import Client
+            client = Client(api_key=os.getenv("GEMINI_API_KEY"))
+            response = client.models.generate_content(
+                model="gemini-2.5-flash",
+                contents=prompt + "\n\nPlease provide a brief analysis with scores for each criterion."
             )
             
             # Parse basic information from text response
-            text_response = response.text
+            text_response = response.candidates[0].content.parts[0].text if response.candidates else ""
             
             # Create basic structured response
             criterion_scores = []

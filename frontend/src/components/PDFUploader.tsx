@@ -16,22 +16,46 @@ export function PDFUploader({ onAnalysisStart, onAnalysisComplete, onError }: PD
   const [selectedFile, setSelectedFile] = useState<File | null>(null)
   const [isUploading, setIsUploading] = useState(false)
 
-  const onDrop = useCallback((acceptedFiles: File[]) => {
+  const onDrop = useCallback((acceptedFiles: File[], rejectedFiles: any[]) => {
+    if (rejectedFiles.length > 0) {
+      const rejection = rejectedFiles[0]
+      if (rejection.errors.some((e: any) => e.code === 'file-invalid-type')) {
+        onError('Please select a valid PDF file')
+      } else if (rejection.errors.some((e: any) => e.code === 'file-too-large')) {
+        onError('File size must be less than 20MB')
+      } else {
+        onError('File upload failed. Please try again.')
+      }
+      return
+    }
+
     const file = acceptedFiles[0]
-    if (file && file.type === 'application/pdf') {
-      setSelectedFile(file)
-    } else {
-      onError('Please select a valid PDF file')
+    if (file) {
+      // Double check file type by extension as well
+      const fileName = file.name.toLowerCase()
+      if (file.type === 'application/pdf' || fileName.endsWith('.pdf')) {
+        setSelectedFile(file)
+      } else {
+        onError('Please select a valid PDF file')
+      }
     }
   }, [onError])
 
   const { getRootProps, getInputProps, isDragActive, isDragReject } = useDropzone({
     onDrop,
     accept: {
-      'application/pdf': ['.pdf']
+      'application/pdf': ['.pdf'],
+      'application/x-pdf': ['.pdf'],
+      'application/acrobat': ['.pdf'],
+      'applications/vnd.pdf': ['.pdf'],
+      'text/pdf': ['.pdf'],
+      'text/x-pdf': ['.pdf']
     },
     maxFiles: 1,
-    maxSize: 10 * 1024 * 1024 // 10MB
+    maxSize: 20 * 1024 * 1024, // 20MB
+    multiple: false,
+    noClick: false,
+    noKeyboard: false
   })
 
   const removeFile = () => {
@@ -51,21 +75,40 @@ export function PDFUploader({ onAnalysisStart, onAnalysisComplete, onError }: PD
       const formData = new FormData()
       formData.append('file', selectedFile)
 
+      // Check if backend is accessible first
+      try {
+        const healthResponse = await fetch(endpoints.health, { method: 'GET' })
+        if (!healthResponse.ok) {
+          throw new Error('Backend server is not responding. Please make sure the backend is running.')
+        }
+      } catch (healthError) {
+        throw new Error('Cannot connect to backend server. Please ensure the backend is running at http://localhost:8000')
+      }
+
       const response = await fetch(endpoints.analyzePdf, {
         method: 'POST',
-        body: formData
+        body: formData,
+        headers: {
+          // Don't set Content-Type header - let the browser set it with boundary for FormData
+        }
       })
 
       if (!response.ok) {
-        const errorData = await response.json().catch(() => ({ detail: 'Analysis failed' }))
-        throw new Error(errorData.detail || `HTTP ${response.status}`)
+        const errorData = await response.json().catch(() => ({ 
+          detail: `Server error (${response.status}): ${response.statusText}` 
+        }))
+        throw new Error(errorData.detail || `HTTP ${response.status}: ${response.statusText}`)
       }
 
       const result = await response.json()
       onAnalysisComplete(result)
     } catch (error) {
       console.error('Analysis error:', error)
-      onError(error instanceof Error ? error.message : 'Analysis failed. Please try again.')
+      if (error instanceof TypeError && error.message.includes('fetch')) {
+        onError('Cannot connect to the analysis server. Please ensure the backend is running.')
+      } else {
+        onError(error instanceof Error ? error.message : 'Analysis failed. Please try again.')
+      }
     } finally {
       setIsUploading(false)
     }
@@ -144,7 +187,7 @@ export function PDFUploader({ onAnalysisStart, onAnalysisComplete, onError }: PD
                 </p>
                 <p className="text-slate-600">or click to browse files</p>
                 <p className="text-sm text-slate-500">
-                  Maximum file size: 10MB
+                  Maximum file size: 20MB
                 </p>
               </div>
             )}

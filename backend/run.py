@@ -16,11 +16,16 @@ if __name__ == "__main__":
     port = int(os.getenv("PORT", "8000"))
     debug = os.getenv("DEBUG", "false").lower() == "true"
     
-    # Run the application
+    # Run the application with increased request size limit
     uvicorn.run(
         "app.main:app",
         host=host,
         port=port,
         reload=debug,
-        log_level="info"
+        log_level="info",
+        limit_max_requests=1000,
+        limit_concurrency=100,
+        # Allow larger request bodies for PDF uploads (25MB)
+        http="h11",
+        loop="asyncio"
     )

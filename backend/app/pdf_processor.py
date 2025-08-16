@@ -1,11 +1,13 @@
 import logging
 from typing import Dict, Any
-from docling.document_converter import DocumentConverter
 from docling.datamodel.base_models import InputFormat
 from docling.datamodel.pipeline_options import PdfPipelineOptions
-from docling.document_converter import PdfFormatOption
+# from docling.datamodel.accelerator_options import AcceleratorDevice, AcceleratorOptions
+from docling.datamodel.pipeline_options import smolvlm_picture_description
+from docling.document_converter import DocumentConverter, PdfFormatOption
 import tempfile
 import os
+
 
 logger = logging.getLogger(__name__)
 
@@ -19,8 +21,15 @@ class PDFProcessor:
         # Configure pipeline options for better extraction
         pipeline_options = PdfPipelineOptions()
         pipeline_options.do_ocr = True  # Enable OCR for scanned documents
+        pipeline_options.ocr_options.use_gpu = False
         pipeline_options.do_table_structure = True  # Extract table structure
         pipeline_options.table_structure_options.do_cell_matching = True
+        # pipeline_options.do_formula_enrichment = True
+        # pipeline_options.generate_picture_images = True
+        # pipeline_options.images_scale = 2
+        # pipeline_options.do_picture_classification = True
+        # pipeline_options.do_picture_description = True
+        pipeline_options.picture_description_options = smolvlm_picture_description
         
         # Configure document converter
         self.converter = DocumentConverter(
@@ -44,6 +53,10 @@ class PDFProcessor:
             
             # Convert document
             result = self.converter.convert(pdf_path)
+            
+            print(f"Result: {result.document}")
+            
+            logger.info(f"Result: {result.document}")
             
             # Extract text content
             full_text = result.document.export_to_markdown()
@@ -168,3 +181,9 @@ class PDFProcessor:
                 sections[section_name] = '\n'.join(section_content)
         
         return sections
+    
+if __name__ == "__main__":
+    pdf_processor = PDFProcessor()
+    pdf_path = "CHEELIZZA PIZZA INDIA LTD - INVESTMENT DECK.pdf"
+    extracted_content = pdf_processor.extract_content(pdf_path)
+    # print(extracted_content)

@@ -35,6 +35,17 @@ class CompanyMetadata(BaseModel):
     founding_year: Optional[int] = Field(None, description="Year founded")
     stage: Optional[str] = Field(None, description="Business stage (startup, growth, mature)")
     employee_count: Optional[int] = Field(None, description="Number of employees")
+    
+class StructuredAnalysis(BaseModel):
+    company_metadata: CompanyMetadata
+    overall_ipo_score: float = Field(..., ge=0, le=100)
+    criterion_scores: List[CriterionScore]
+    executive_summary: ExecutiveSummary
+    risk_assessment: RiskAssessment
+    follow_up_questions: FollowUpQuestions
+    financial_highlights: Dict[str, Any] = Field(default_factory=dict)
+    competitive_positioning: str
+    confidence_score: float = Field(..., ge=0, le=1)
 
 class IPOAnalysisResponse(BaseModel):
     """Complete IPO readiness analysis response"""
