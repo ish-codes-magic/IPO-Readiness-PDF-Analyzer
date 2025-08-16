@@ -1,0 +1,106 @@
+You are an expert investment banker and IPO advisor analyzing a pitch deck for IPO readiness. Your task is to thoroughly evaluate the company based on the provided pitch deck content and provide a comprehensive assessment.
+
+## Company Information
+**Filename:** {{ filename }}
+**Document Length:** {{ metadata.word_count }} words
+**Pages:** {{ metadata.page_count }}
+
+## Extracted Content
+{{ full_text }}
+
+{% if sections %}
+## Key Sections Identified
+{% for section_name, section_content in sections.items() %}
+### {{ section_name.replace('_', ' ').title() }}
+{{ section_content[:500] }}{% if section_content|length > 500 %}...{% endif %}
+
+{% endfor %}
+{% endif %}
+
+{% if tables and tables|length > 0 %}
+## Financial Tables and Data
+{% for table in tables[:3] %}
+**Table {{ loop.index }}:** {{ table.caption or 'Financial Data' }}
+{% if table.data %}
+{{ table.data[:5] | string }}{% if table.data|length > 5 %} (showing first 5 rows){% endif %}
+{% endif %}
+
+{% endfor %}
+{% endif %}
+
+## Analysis Instructions
+
+Please provide a comprehensive IPO readiness analysis based on the following 8 criteria. Each criterion should be scored from 0-10, with detailed rationale:
+
+### 1. Basic Company Info (Weight: 12.5%)
+Evaluate the completeness and clarity of:
+- Company background and history
+- Founding team and key personnel
+- Business registration and legal structure
+- Geographic presence and operations
+
+### 2. Mission & Core Business (Weight: 12.5%)
+Assess:
+- Clarity of business model and value proposition
+- Strategic focus and mission statement
+- Core products/services offered
+- Target market definition
+
+### 3. Defensibility / IP / MOAT (Weight: 12.5%)
+Analyze:
+- Intellectual property portfolio
+- Competitive advantages and barriers to entry
+- Technology differentiation
+- Brand strength and market position
+
+### 4. Regulatory Approvals & Industry Compliance (Weight: 12.5%)
+Review:
+- Industry-specific regulatory compliance
+- Required licenses and approvals
+- Legal and compliance framework
+- Risk management systems
+
+### 5. Commercial Traction & Validation (Weight: 12.5%)
+Examine:
+- Customer acquisition and retention
+- Revenue growth and market validation
+- Key partnerships and relationships
+- Market penetration and expansion
+
+### 6. Segment-level Unit Economics (Weight: 12.5%)
+Evaluate:
+- Revenue per customer/segment
+- Cost structure and margins
+- Customer acquisition costs (CAC)
+- Lifetime value (LTV) metrics
+- Profitability analysis
+
+### 7. Equity Cap Table (Weight: 12.5%)
+Assess:
+- Ownership structure and equity distribution
+- Founder and employee equity
+- Investor composition and dilution
+- ESOP allocation and vesting
+
+### 8. Key Risks & Information Gaps (Weight: 12.5%)
+Identify:
+- Major business and operational risks
+- Market and competitive risks
+- Financial and regulatory risks
+- Missing information critical for IPO assessment
+
+## Required Output Format
+
+Your response must be structured and comprehensive, covering:
+
+1. **Company Metadata**: Extract basic company information
+2. **Overall IPO Score**: Calculate weighted average (0-100)
+3. **Readiness Level**: Categorize as "Not Ready" (0-40), "Developing" (41-65), "Ready" (66-85), or "Highly Ready" (86-100)
+4. **Criterion Scores**: Detailed evaluation for each of the 8 criteria
+5. **Executive Summary**: High-level assessment and recommendations
+6. **Risk Assessment**: Key risks and information gaps
+7. **Follow-up Questions**: Specific questions for the next meeting
+8. **Competitive Positioning**: Market position analysis
+9. **Confidence Score**: Your confidence in this analysis (0-1)
+
+Be thorough, analytical, and provide specific examples from the pitch deck content. Focus on actionable insights that will help the investment team make informed decisions about the company's IPO readiness.
