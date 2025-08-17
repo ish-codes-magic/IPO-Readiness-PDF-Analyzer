@@ -11,7 +11,7 @@ A comprehensive AI-powered platform that analyzes SME pitch deck PDFs and provid
 
 ### Core Functionality
 - **PDF Upload & Analysis**: Drag-and-drop interface for pitch deck uploads
-- **AI-Powered Content Extraction**: Using Docling for advanced PDF processing
+- **AI-Powered Content Extraction**: Using Gemini LLM with vision capabilities for intelligent PDF analysis
 - **Comprehensive IPO Scoring**: 8-criteria evaluation system with detailed rationale
 - **Interactive Visualizations**: Charts and graphs using Recharts
 - **Detailed Reports**: Executive summaries, risk assessments, and actionable recommendations
@@ -47,7 +47,7 @@ A comprehensive AI-powered platform that analyzes SME pitch deck PDFs and provid
 
 ### Backend
 - **FastAPI** - Modern Python web framework
-- **Docling** - Advanced PDF content extraction
+- **Gemini LLM + Vision** - AI-powered PDF content extraction and analysis
 - **Google Gemini API** - Large language model for analysis
 - **Instructor** - Structured response validation
 - **Jinja2** - Template engine for prompts

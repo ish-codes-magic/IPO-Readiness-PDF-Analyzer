@@ -7,3 +7,4 @@ pydantic>=2.11.7
 python-dotenv>=1.1.1
 python-multipart>=0.0.20
 uvicorn>=0.35.0
+llama-cloud-services>=0.1.0

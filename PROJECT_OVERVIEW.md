@@ -7,7 +7,7 @@ A complete full-stack platform for analyzing SME pitch deck PDFs and scoring IPO
 ## ✅ Completed Features
 
 ### Backend (Python/FastAPI)
-- ✅ **PDF Processing**: Advanced content extraction using Docling
+- ✅ **PDF Processing**: AI-powered content extraction using Gemini LLM with vision capabilities
 - ✅ **AI Analysis**: Gemini API integration with Instructor for structured responses
 - ✅ **IPO Scoring**: 8-criteria evaluation system with equal weighting
 - ✅ **Prompt Templates**: Jinja2 templates for consistent AI prompting
@@ -60,7 +60,7 @@ A complete full-stack platform for analyzing SME pitch deck PDFs and scoring IPO
 | **UI Components** | Radix UI | Accessible, unstyled UI primitives |
 | **Charts** | Recharts | Data visualization library |
 | **Backend Framework** | FastAPI | High-performance Python web framework |
-| **PDF Processing** | Docling | Advanced PDF content extraction |
+| **PDF Processing** | Gemini LLM + Vision | AI-powered content extraction with visual analysis |
 | **AI/LLM** | Google Gemini | Large language model for analysis |
 | **Response Validation** | Instructor | Structured AI response validation |
 | **Template Engine** | Jinja2 | Prompt template management |

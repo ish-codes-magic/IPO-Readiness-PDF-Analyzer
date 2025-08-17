@@ -1,14 +1,8 @@
 {
-    "builds": [
-      {
-        "src": "run.py",
-        "use": "@vercel/python"
-      }
-    ],
-    "routes": [
-      {
-        "src": "/(.*)",
-        "dest": "run.py"
-      }
-    ]
-  }
+  "functions": {
+    "api/index.py": { "runtime": "python3.11" }
+  },
+  "rewrites": [
+    { "source": "/(.*)", "destination": "/api/index.py" }
+  ]
+}

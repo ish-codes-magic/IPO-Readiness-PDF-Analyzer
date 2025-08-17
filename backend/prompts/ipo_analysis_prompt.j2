@@ -8,14 +8,8 @@ You are an expert investment banker and IPO advisor analyzing a pitch deck for I
 ## Extracted Content
 {{ full_text }}
 
-{% if sections %}
-## Key Sections Identified
-{% for section_name, section_content in sections.items() %}
-### {{ section_name.replace('_', ' ').title() }}
-{{ section_content[:500] }}{% if section_content|length > 500 %}...{% endif %}
-
-{% endfor %}
-{% endif %}
+## Document Analysis
+The following content has been extracted from the PDF using advanced processing techniques including text extraction, table detection, and image analysis.
 
 {% if tables and tables|length > 0 %}
 ## Financial Tables and Data
