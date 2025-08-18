@@ -7,9 +7,9 @@ import tempfile
 import logging
 from typing import Dict, Any
 
-from .pdf_processor import PDFProcessor
-from .ipo_analyzer import IPOAnalyzer
-from .models.response_models import IPOAnalysisResponse
+from pdf_processor import PDFProcessor
+from ipo_analyzer import IPOAnalyzer
+from models.response_models import IPOAnalysisResponse
 
 # Load environment variables
 load_dotenv()

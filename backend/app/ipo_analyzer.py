@@ -10,7 +10,7 @@ from pydantic import BaseModel, Field
 from dotenv import load_dotenv
 from google.genai import Client, types
 
-from .models.response_models import (
+from models.response_models import (
     IPOAnalysisResponse, CriterionScore, ExecutiveSummary, 
     RiskAssessment, FollowUpQuestions, CompanyMetadata, StructuredAnalysis
 )
