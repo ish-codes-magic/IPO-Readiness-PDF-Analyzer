@@ -51,7 +51,6 @@ class IPOAnalysisResponse(BaseModel):
     """Complete IPO readiness analysis response"""
     analysis_id: str = Field(..., description="Unique identifier for this analysis")
     timestamp: datetime = Field(default_factory=datetime.now, description="Analysis timestamp")
-    filename: str = Field(..., description="Original PDF filename")
     
     # Company metadata
     company_metadata: CompanyMetadata = Field(..., description="Basic company information")

@@ -84,7 +84,7 @@ class IPOAnalyzer:
             }
         ]
     
-    async def analyse(self, content: Dict[str, Any], filename: str) -> IPOAnalysisResponse:
+    async def analyse(self, content: str, extracted_content: Dict[str, Any]) -> IPOAnalysisResponse:
         """
         Analyze extracted PDF content for IPO readiness
         
@@ -99,10 +99,10 @@ class IPOAnalyzer:
         analysis_id = str(uuid.uuid4())
         
         try:
-            logger.info(f"Starting IPO analysis for {filename}")
+            logger.info(f"Starting IPO analysis")
             
             # Render the analysis prompt using Jinja2
-            prompt = self._render_analysis_prompt(content, filename)
+            prompt = self._render_analysis_prompt(content, extracted_content)
             
             # Get structured analysis from Gemini
             analysis_result = await self._get_structured_analysis(prompt)
@@ -113,7 +113,6 @@ class IPOAnalyzer:
             # Build final response
             response = IPOAnalysisResponse(
                 analysis_id=analysis_id,
-                filename=filename,
                 company_metadata=analysis_result.get("company_metadata", CompanyMetadata()),
                 overall_ipo_score=analysis_result.get("overall_ipo_score", 0),
                 readiness_level=self._determine_readiness_level(analysis_result.get("overall_ipo_score", 0)),
@@ -140,7 +139,6 @@ class IPOAnalyzer:
             # Return a basic error response
             return IPOAnalysisResponse(
                 analysis_id=analysis_id,
-                filename=filename,
                 company_metadata=CompanyMetadata(),
                 overall_ipo_score=0,
                 readiness_level="Not Ready",
@@ -156,18 +154,15 @@ class IPOAnalyzer:
                 confidence_score=0.0
             )
     
-    def _render_analysis_prompt(self, content: Dict[str, Any], filename: str) -> str:
+    def _render_analysis_prompt(self, content: str, extracted_content: Dict[str, Any]) -> str:
         """
         Render the Jinja2 template with extracted content
         """
         template = self.jinja_env.get_template("ipo_analysis_prompt.j2")
         
         return template.render(
-            filename=filename,
-            full_text=content.get("full_text", ""),
-            # sections=content.get("sections", {}),
-            tables=content.get("tables", []),
-            metadata=content.get("metadata", {})
+            full_text=content,
+            extracted_content=extracted_content
         )
     
     async def _get_structured_analysis(self, prompt: str) -> Dict[str, Any]:

@@ -1,13 +1,20 @@
 import logging
 import os
 import asyncio
-from typing import Dict, Any, List
+import time
+from typing import Dict, Any, Tuple
 from datetime import datetime
 import instructor
+import httpx
 from jinja2 import Environment, FileSystemLoader
-from llama_cloud_services import LlamaParse
+from dotenv import load_dotenv
+load_dotenv()
 
-from .models.pdf_extraction_models import PDFExtractionResult, DocumentMetadata
+try:
+    from .models.pdf_extraction_models import PDFExtractionResult
+except ImportError:
+    # For direct execution, try absolute import
+    from models.pdf_extraction_models import PDFExtractionResult
 
 logger = logging.getLogger(__name__)
 
@@ -24,28 +31,29 @@ class PDFProcessor:
             raise ValueError("GEMINI_API_KEY environment variable is required")
         
         # Configure LlamaParse API
-        llama_api_key = os.getenv("LLAMA_CLOUD_API_KEY")
-        if not llama_api_key:
+        self.llama_api_key = os.getenv("LLAMA_CLOUD_API_KEY")
+        if not self.llama_api_key:
             raise ValueError("LLAMA_CLOUD_API_KEY environment variable is required")
         
-        # Initialize LlamaParse for PDF text extraction
-        self.llama_parser = LlamaParse(
-            api_key=llama_api_key,
-            num_workers=4,
-            verbose=True,
-            language="en"
-        )
+        # LlamaParse REST API configuration
+        self.llama_base_url = "https://api.cloud.llamaindex.ai"
+        self.llama_headers = {
+            "Authorization": f"Bearer {self.llama_api_key}",
+            "Accept": "application/json"
+        }
         
         # Initialize Gemini model with Instructor for structured responses
+        # Set the API key as environment variable for instructor
+        os.environ["GOOGLE_API_KEY"] = gemini_api_key
         self.model = instructor.from_provider(
-            "google/gemini-2.0-flash-exp"
+            "google/gemini-2.5-flash"
         )
         
         # Initialize Jinja2 template environment
         template_dir = "./../prompts"
         self.jinja_env = Environment(loader=FileSystemLoader(template_dir))
     
-    def extract_content(self, pdf_path: str) -> Dict[str, Any]:
+    def extract_content(self, pdf_path: str) -> Tuple[str, Dict[str, Any]]:
         """
         Extract structured content from PDF file using LlamaParse and Gemini LLM
         
@@ -60,14 +68,14 @@ class PDFProcessor:
             
             # Extract text using LlamaParse
             logger.info("Extracting text with LlamaParse...")
-            parsed_documents = self._extract_with_llamaparse(pdf_path)
+            full_text = self._extract_with_llamaparse(pdf_path)
+            
+            print(f"Full text: {full_text}")
             
             # Get document basic info
             doc_info = self._get_pdf_info(pdf_path)
             
-            # Combine all extracted text
-            full_text = "\n\n".join([doc.text for doc in parsed_documents])
-            logger.info(f"LlamaParse extracted {len(full_text)} characters from {len(parsed_documents)} document(s)")
+            logger.info(f"LlamaParse extracted {len(full_text)} characters")
             
             # Extract structured content using Gemini
             logger.info("Analyzing content with Gemini...")
@@ -77,42 +85,159 @@ class PDFProcessor:
                 doc_info['page_count']
             )
             
-            # Convert to the expected format for backward compatibility
-            extracted_content = self._convert_to_legacy_format(extraction_result)
-            
             logger.info("Successfully extracted content using LlamaParse + Gemini")
-            logger.info(f"Quality score: {extraction_result.metadata.quality_score:.2f}")
-            logger.info(f"Confidence score: {extraction_result.metadata.confidence_score:.2f}")
             
-            return extracted_content
+            return full_text, extraction_result
             
         except Exception as e:
             logger.error(f"Error extracting PDF content: {str(e)}")
             raise Exception(f"PDF extraction failed: {str(e)}")
     
-    def _extract_with_llamaparse(self, pdf_path: str) -> List[Any]:
+    def _extract_with_llamaparse(self, pdf_path: str) -> str:
         """
-        Extract text from PDF using LlamaParse
+        Extract text from PDF using LlamaParse REST API
         
         Args:
             pdf_path: Path to the PDF file
             
         Returns:
-            List of parsed document objects
+            Extracted text content as markdown string
         """
         try:
-            # Parse the PDF file with LlamaParse
-            logger.info(f"Parsing PDF with LlamaParse: {pdf_path}")
+            logger.info(f"Parsing PDF with LlamaParse REST API: {pdf_path}")
             
-            # Use synchronous parsing
-            parsed_documents = self.llama_parser.load_data(pdf_path)
+            # Step 1: Upload the file
+            job_id = self._upload_file_to_llamaparse(pdf_path)
+            logger.info(f"File uploaded, job ID: {job_id}")
             
-            logger.info(f"LlamaParse successfully parsed {len(parsed_documents)} document(s)")
-            return parsed_documents
+            # Step 2: Wait for processing to complete
+            self._wait_for_job_completion(job_id)
+            
+            # Step 3: Get the results
+            markdown_content = self._get_job_results(job_id)
+            
+            logger.info(f"LlamaParse successfully extracted {len(markdown_content)} characters")
+            return markdown_content
             
         except Exception as e:
             logger.error(f"Error parsing PDF with LlamaParse: {str(e)}")
             raise Exception(f"LlamaParse extraction failed: {str(e)}")
+    
+    def _upload_file_to_llamaparse(self, pdf_path: str) -> str:
+        """
+        Upload file to LlamaParse and return job ID
+        
+        Args:
+            pdf_path: Path to the PDF file
+            
+        Returns:
+            Job ID for the parsing task
+        """
+        try:
+            with httpx.Client() as client:
+                with open(pdf_path, 'rb') as file:
+                    files = {
+                        'file': (os.path.basename(pdf_path), file, 'application/pdf')
+                    }
+                    
+                    response = client.post(
+                        f"{self.llama_base_url}/api/v1/parsing/upload",
+                        headers=self.llama_headers,
+                        files=files,
+                        timeout=60.0
+                    )
+                    
+                    response.raise_for_status()
+                    result = response.json()
+                    
+                    if 'id' not in result:
+                        raise ValueError(f"No job ID returned from LlamaParse: {result}")
+                    
+                    return result['id']
+                    
+        except Exception as e:
+            logger.error(f"Error uploading file to LlamaParse: {str(e)}")
+            raise
+    
+    def _wait_for_job_completion(self, job_id: str, max_wait_time: int = 300, check_interval: int = 5) -> None:
+        """
+        Wait for LlamaParse job to complete
+        
+        Args:
+            job_id: The job ID to check
+            max_wait_time: Maximum time to wait in seconds (default: 5 minutes)
+            check_interval: How often to check status in seconds (default: 5 seconds)
+        """
+        start_time = time.time()
+        
+        while time.time() - start_time < max_wait_time:
+            try:
+                with httpx.Client() as client:
+                    response = client.get(
+                        f"{self.llama_base_url}/api/v1/parsing/job/{job_id}",
+                        headers=self.llama_headers,
+                        timeout=30.0
+                    )
+                    
+                    response.raise_for_status()
+                    job_status = response.json()
+                    
+                    status = job_status.get('status', 'UNKNOWN')
+                    logger.info(f"Job {job_id} status: {status}")
+                    
+                    if status == 'SUCCESS':
+                        return
+                    elif status == 'ERROR':
+                        error_msg = job_status.get('error', 'Unknown error')
+                        raise Exception(f"LlamaParse job failed: {error_msg}")
+                    elif status in ['PENDING', 'PROCESSING']:
+                        time.sleep(check_interval)
+                        continue
+                    else:
+                        logger.warning(f"Unknown status: {status}, continuing to wait...")
+                        time.sleep(check_interval)
+                        continue
+                        
+            except httpx.HTTPError as e:
+                logger.error(f"HTTP error checking job status: {str(e)}")
+                time.sleep(check_interval)
+                continue
+        
+        raise Exception(f"Job {job_id} did not complete within {max_wait_time} seconds")
+    
+    def _get_job_results(self, job_id: str) -> str:
+        """
+        Get the markdown results from a completed LlamaParse job
+        
+        Args:
+            job_id: The completed job ID
+            
+        Returns:
+            Markdown content as string
+        """
+        try:
+            with httpx.Client() as client:
+                response = client.get(
+                    f"{self.llama_base_url}/api/v1/parsing/job/{job_id}/result/markdown",
+                    headers=self.llama_headers,
+                    timeout=30.0
+                )
+                
+                response.raise_for_status()
+                result = response.json()
+                
+                # The result should contain the markdown content
+                if 'markdown' in result:
+                    return result['markdown']
+                elif isinstance(result, str):
+                    return result
+                else:
+                    # Sometimes the result might be in a different format
+                    return str(result)
+                    
+        except Exception as e:
+            logger.error(f"Error getting job results: {str(e)}")
+            raise
     
 
     
@@ -145,7 +270,7 @@ class PDFProcessor:
             logger.error(f"Error getting PDF info: {str(e)}")
             return {"page_count": 1, "metadata": {}, "is_encrypted": False, "file_size": 0}
     
-    def _extract_with_gemini_text(self, text_content: str, filename: str, total_pages: int) -> PDFExtractionResult:
+    async def _extract_with_gemini_text(self, text_content: str, filename: str, total_pages: int) -> Dict[str, Any]:
         """
         Extract structured content using Gemini LLM with text input
         
@@ -170,38 +295,25 @@ class PDFProcessor:
             logger.info("Sending text to Gemini for structured analysis...")
             
             # Use instructor with async handling
-            async def _create_response():
-                return await self.model.messages.create(
+            response = await self.model.messages.create(
                     messages=[{
                         "role": "user", 
                         "content": prompt
                     }],
                     response_model=PDFExtractionResult,
-                    temperature=0.1,  # Low temperature for more consistent extraction
                     max_retries=3
                 )
             
             # Run the async function synchronously
-            response = asyncio.run(_create_response())
+            # response = asyncio.run(_create_response())
             
             logger.info("Successfully received structured response from Gemini")
-            return response
+            return response.model_dump()
             
         except Exception as e:
             logger.error(f"Error extracting with Gemini: {str(e)}")
             # Return a basic structure with error information
-            return PDFExtractionResult(
-                full_text=text_content if text_content else f"Extraction failed: {str(e)}",
-                metadata=DocumentMetadata(
-                    total_pages=total_pages,
-                    quality_score=0.0,
-                    confidence_score=0.0,
-                    creation_date=datetime.now(),
-                    last_modified=datetime.now()
-                ),
-                key_insights=[f"Extraction failed due to: {str(e)}"],
-                missing_information=["All information due to extraction failure"]
-            )
+            raise Exception(f"Error extracting with Gemini: {str(e)}")
     
     def _convert_to_legacy_format(self, extraction_result: PDFExtractionResult) -> Dict[str, Any]:
         """
@@ -213,41 +325,11 @@ class PDFProcessor:
         Returns:
             Dictionary in the legacy format
         """
-        # Convert tables to legacy format
-        tables = []
-        for table in extraction_result.tables:
-            table_data = []
-            if table.headers and table.rows:
-                # Add headers as first row
-                table_data.append(table.headers)
-                # Add all data rows
-                table_data.extend(table.rows)
-            
-            tables.append({
-                "caption": table.title,
-                "data": [dict(zip(table.headers, row)) for row in table.rows] if table.headers and table.rows else [],
-                "page": table.page_number,
-                "raw_data": table_data
-            })
-        
-        # Convert images to legacy format
-        images = []
-        for img in extraction_result.images:
-            images.append({
-                "description": img.description,
-                "type": img.type,
-                "page": img.page_number,
-                "insights": img.key_insights,
-                "data_points": img.data_points
-            })
         
         # Create metadata in legacy format
         metadata = {
             "page_count": extraction_result.metadata.total_pages,
             "title": extraction_result.company_info.company_name or "",
-            "tables_count": len(tables),
-            "images_count": len(images),
-            "has_images": len(images) > 0,
             "word_count": len(extraction_result.full_text.split()) if extraction_result.full_text else 0,
             "quality_score": extraction_result.metadata.quality_score,
             "confidence_score": extraction_result.metadata.confidence_score,
@@ -316,10 +398,7 @@ class PDFProcessor:
             # This is a limitation of LlamaParse - it doesn't support single page extraction
             logger.info(f"Extracting page {page_num + 1} text using LlamaParse")
             
-            parsed_documents = self._extract_with_llamaparse(pdf_path)
-            
-            # Combine all text and attempt to split by pages
-            full_text = "\n\n".join([doc.text for doc in parsed_documents])
+            full_text = self._extract_with_llamaparse(pdf_path)
             
             # Since LlamaParse doesn't provide page-specific extraction,
             # we'll return a portion of the text or the full text with a warning
@@ -339,17 +418,13 @@ if __name__ == "__main__":
     pdf_processor = PDFProcessor()
     
     # Test with a sample PDF file
-    test_pdf_path = "sample.pdf"  # Replace with actual PDF path for testing
+    test_pdf_path = "CHEELIZZA PIZZA INDIA LTD - INVESTMENT DECK.pdf"  # Replace with actual PDF path for testing
     
     if os.path.exists(test_pdf_path):
         try:
-            extracted_content = pdf_processor.extract_content(test_pdf_path)
-            print(f"Extracted content from {extracted_content['metadata']['page_count']} pages")
-            print(f"Word count: {extracted_content['metadata']['word_count']}")
-            print(f"Tables found: {extracted_content['metadata']['tables_count']}")
-            print(f"Images found: {extracted_content['metadata']['images_count']}")
-            print(f"Quality score: {extracted_content['metadata']['quality_score']:.2f}")
-            print(f"Confidence score: {extracted_content['metadata']['confidence_score']:.2f}")
+            full_text, extracted_content = pdf_processor.extract_content(test_pdf_path)
+            print(f"Full text: {full_text}")
+            print(f"Extracted content: {extracted_content}")
         except Exception as e:
             print(f"Error: {e}")
     else:

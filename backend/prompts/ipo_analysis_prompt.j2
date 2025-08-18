@@ -1,26 +1,12 @@
 You are an expert investment banker and IPO advisor analyzing a pitch deck for IPO readiness. Your task is to thoroughly evaluate the company based on the provided pitch deck content and provide a comprehensive assessment.
 
-## Company Information
-**Filename:** {{ filename }}
-**Document Length:** {{ metadata.word_count }} words
-**Pages:** {{ metadata.page_count }}
-
-## Extracted Content
+## Full Text
 {{ full_text }}
 
 ## Document Analysis
 The following content has been extracted from the PDF using advanced processing techniques including text extraction, table detection, and image analysis.
 
-{% if tables and tables|length > 0 %}
-## Financial Tables and Data
-{% for table in tables[:3] %}
-**Table {{ loop.index }}:** {{ table.caption or 'Financial Data' }}
-{% if table.data %}
-{{ table.data[:5] | string }}{% if table.data|length > 5 %} (showing first 5 rows){% endif %}
-{% endif %}
-
-{% endfor %}
-{% endif %}
+{{ extracted_content }}
 
 ## Analysis Instructions
 
