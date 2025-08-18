@@ -14,7 +14,7 @@ try:
     from .models.pdf_extraction_models import PDFExtractionResult
 except ImportError:
     # For direct execution, try absolute import
-    from models.pdf_extraction_models import PDFExtractionResult
+    from app.models.pdf_extraction_models import PDFExtractionResult
 
 logger = logging.getLogger(__name__)
 
