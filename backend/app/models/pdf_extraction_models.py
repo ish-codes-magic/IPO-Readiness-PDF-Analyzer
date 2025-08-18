@@ -81,8 +81,6 @@ class FundingInfo(BaseModel):
 
 class PDFExtractionResult(BaseModel):
     """Complete PDF extraction result model"""
-    # Document structure
-    full_text: str = Field(..., description="Complete extracted text from all pages")
     
     # Business information
     company_info: CompanyInfo = Field(..., description="Company information")

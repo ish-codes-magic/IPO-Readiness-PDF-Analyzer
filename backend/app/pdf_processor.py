@@ -8,6 +8,9 @@ import instructor
 import httpx
 from jinja2 import Environment, FileSystemLoader
 from dotenv import load_dotenv
+from google.genai import Client, types
+from instructor import Mode
+
 load_dotenv()
 
 try:
@@ -41,12 +44,12 @@ class PDFProcessor:
             "Authorization": f"Bearer {self.llama_api_key}",
             "Accept": "application/json"
         }
-        
-        # Initialize Gemini model with Instructor for structured responses
-        # Set the API key as environment variable for instructor
-        os.environ["GOOGLE_API_KEY"] = gemini_api_key
-        self.model = instructor.from_provider(
-            "google/gemini-2.5-flash"
+        self.genai_client = Client(api_key=gemini_api_key)
+         
+        # Initialize Gemini model with Instructor
+        self.model = instructor.from_genai(
+            client=self.genai_client,
+            mode=Mode.GENAI_STRUCTURED_OUTPUTS
         )
         
         # Initialize Jinja2 template environment
@@ -295,12 +298,17 @@ class PDFProcessor:
             logger.info("Sending text to Gemini for structured analysis...")
             
             # Use instructor with async handling
-            response = await self.model.messages.create(
+            response = await self.model.create(
                     messages=[{
                         "role": "user", 
                         "content": prompt
                     }],
                     response_model=PDFExtractionResult,
+                    model="gemini-2.5-flash",
+                    config=types.GenerateContentConfig(
+                        temperature=0.1,  # Low temperature for more consistent extraction
+                        thinking_config=types.ThinkingConfig(thinking_budget=2000)
+                    ),
                     max_retries=3
                 )
             

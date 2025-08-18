@@ -35,6 +35,17 @@ class CompanyMetadata(BaseModel):
     founding_year: Optional[int] = Field(None, description="Year founded")
     stage: Optional[str] = Field(None, description="Business stage (startup, growth, mature)")
     employee_count: Optional[int] = Field(None, description="Number of employees")
+
+class FinancialMetrics(BaseModel):
+    """Model for extracted financial metrics"""
+    revenue: str = Field(..., description="Revenue figures mentioned/ 'N/A' if not mentioned")
+    profit: str = Field(..., description="Profit/loss figures/ 'N/A' if not mentioned")
+    growth_rate: str = Field(..., description="Growth rate percentages/ 'N/A' if not mentioned")
+    funding_raised: str = Field(..., description="Funding amounts raised/ 'N/A' if not mentioned")
+    valuation: str = Field(..., description="Company valuation/ 'N/A' if not mentioned")
+    burn_rate: str = Field(..., description="Monthly/yearly burn rate/ 'N/A' if not mentioned")
+    runway: str = Field(..., description="Financial runway/ 'N/A' if not mentioned")
+    other_metrics: str = Field(..., description="Other financial metrics found/ 'N/A' if not mentioned")
     
 class StructuredAnalysis(BaseModel):
     company_metadata: CompanyMetadata
@@ -43,7 +54,7 @@ class StructuredAnalysis(BaseModel):
     executive_summary: ExecutiveSummary
     risk_assessment: RiskAssessment
     follow_up_questions: FollowUpQuestions
-    financial_highlights: Dict[str, Any] = Field(default_factory=dict)
+    financial_highlights: FinancialMetrics = Field(..., description="Key financial metrics identified")
     competitive_positioning: str
     confidence_score: float = Field(..., ge=0, le=1)
 

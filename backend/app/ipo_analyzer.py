@@ -176,6 +176,10 @@ class IPOAnalyzer:
                 messages=[{"role": "user", "content": prompt}],
                 response_model=StructuredAnalysis,
                 model="gemini-2.5-flash",
+                config=types.GenerateContentConfig(
+                    temperature=0.1,  # Low temperature for more consistent extraction
+                    thinking_config=types.ThinkingConfig(thinking_budget=2000)
+                ),
                 max_retries=3
             )
             
