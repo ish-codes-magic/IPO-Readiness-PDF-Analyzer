@@ -77,6 +77,7 @@ export function PDFUploader({ onAnalysisStart, onAnalysisComplete, onError }: PD
 
       // Check if backend is accessible first
       try {
+        console.log(endpoints)
         const healthResponse = await fetch(endpoints.health, { method: 'GET' })
         if (!healthResponse.ok) {
           throw new Error('Backend server is not responding. Please make sure the backend is running.')

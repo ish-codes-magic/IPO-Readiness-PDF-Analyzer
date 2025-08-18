@@ -50,7 +50,7 @@ class PDFProcessor:
         )
         
         # Initialize Jinja2 template environment
-        template_dir = "./../prompts"
+        template_dir = "./prompts"
         self.jinja_env = Environment(loader=FileSystemLoader(template_dir))
     
     def extract_content(self, pdf_path: str) -> Tuple[str, Dict[str, Any]]:

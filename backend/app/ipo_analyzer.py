@@ -37,7 +37,7 @@ class IPOAnalyzer:
             mode=Mode.GENAI_STRUCTURED_OUTPUTS
         )
         # Initialize Jinja2 template environment
-        template_dir = "./../prompts"
+        template_dir = "./prompts"
         self.jinja_env = Environment(loader=FileSystemLoader(template_dir))
         
         # Evaluation criteria definitions
