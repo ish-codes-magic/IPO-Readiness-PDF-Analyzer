@@ -1,8 +1,20 @@
 {
-  "builds": [
-    { "src": "app/main.py", "use": "@vercel/python@3.11.0" }
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "functions": {
+    "app/main.py": {
+      "runtime": "python3.11"
+    }
+  },
+  "rewrites": [
+    {
+      "source": "/(.*)",
+      "destination": "/app/main"
+    }
   ],
-  "routes": [
-    { "src": "/(.*)", "dest": "app/main.py" }
-  ]
+  "build": {
+    "env": {
+      "PYTHONPATH": "."
+    }
+  },
+  "installCommand": "pip install -r requirements.txt"
 }
