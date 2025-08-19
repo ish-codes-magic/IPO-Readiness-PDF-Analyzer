@@ -4,6 +4,6 @@
   "devCommand": "npm run dev",
   "installCommand": "npm install",
   "env": {
-    "NEXT_PUBLIC_API_URL": "@backend_url"
+    "NEXT_PUBLIC_API_URL": "https://ipo-readiness-pdf-analyzer.onrender.com"
   }
 }
