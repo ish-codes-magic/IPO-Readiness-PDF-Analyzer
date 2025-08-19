@@ -6,13 +6,47 @@ import { PDFUploader } from '@/components/PDFUploader'
 import { AnalysisResults } from '@/components/AnalysisResults'
 import { LoadingSpinner } from '@/components/LoadingSpinner'
 
+type AnalysisData = {
+  overall_ipo_score: number
+  readiness_level: string
+  filename: string
+  timestamp: string
+  processing_time_seconds?: number
+  confidence_score?: number
+  company_metadata?: {
+    company_name?: string
+    industry?: string
+  }
+  criterion_scores?: Array<{
+    name: string
+    score: number
+    rationale: string
+    strengths?: string[]
+    weaknesses?: string[]
+  }>
+  executive_summary?: {
+    overall_assessment?: string
+    key_highlights?: string[]
+    recommendation?: string
+  }
+  risk_assessment?: {
+    key_risks?: string[]
+    information_gaps?: string[]
+  }
+  competitive_positioning?: string
+  follow_up_questions?: {
+    questions?: string[]
+    priority_areas?: string[]
+  }
+}
+
 export default function Home() {
-  const [analysisData, setAnalysisData] = useState(null)
+  const [analysisData, setAnalysisData] = useState<AnalysisData | null>(null)
   const [isAnalyzing, setIsAnalyzing] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
-  const handleAnalysisComplete = (data: any) => {
-    setAnalysisData(data)
+  const handleAnalysisComplete = (data: unknown) => {
+    setAnalysisData(data as AnalysisData)
     setIsAnalyzing(false)
     setError(null)
   }

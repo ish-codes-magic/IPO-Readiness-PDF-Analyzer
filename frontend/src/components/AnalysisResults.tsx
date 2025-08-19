@@ -24,16 +24,61 @@ import {
   XAxis, 
   YAxis, 
   CartesianGrid, 
-  Tooltip,
-  PieChart,
-  Pie,
-  Cell
+  Tooltip
 } from 'recharts'
 import * as Tabs from '@radix-ui/react-tabs'
 import clsx from 'clsx'
 
 interface AnalysisResultsProps {
-  data: any
+  data: {
+    analysis_id?: string
+    overall_ipo_score: number
+    readiness_level?: string
+    filename?: string
+    timestamp: string
+    processing_time_seconds?: number
+    confidence_score?: number
+    company_metadata?: {
+      company_name?: string
+      industry?: string
+      founding_year?: number
+      stage?: string
+      employee_count?: number
+    }
+    criterion_scores?: Array<{
+      name: string
+      score: number
+      rationale: string
+      strengths?: string[]
+      weaknesses?: string[]
+    }>
+    executive_summary?: {
+      overall_assessment?: string
+      key_highlights?: string[]
+      recommendation?: string
+      critical_gaps?: string[]
+    }
+    risk_assessment?: {
+      key_risks?: string[]
+      information_gaps?: string[]
+      risk_level?: string
+    }
+    competitive_positioning?: string
+    follow_up_questions?: {
+      questions?: string[]
+      priority_areas?: string[]
+    }
+    financial_highlights?: {
+      revenue?: string
+      profit?: string
+      growth_rate?: string
+      funding_raised?: string
+      valuation?: string
+      burn_rate?: string
+      runway?: string
+      other_metrics?: string
+    }
+  }
 }
 
 const criteriaIcons = {
@@ -76,17 +121,12 @@ export function AnalysisResults({ data }: AnalysisResultsProps) {
     }
   ]
 
-  const criteriaData = data.criterion_scores?.map((criterion: any, index: number) => ({
+  const criteriaData = data.criterion_scores?.map((criterion, index: number) => ({
     name: criterion.name.replace(' / ', '/\n'),
     score: criterion.score,
     fullName: criterion.name,
     fill: COLORS[index % COLORS.length]
   })) || []
-
-  const readinessDistribution = [
-    { name: 'Current Score', value: data.overall_ipo_score, fill: '#3B82F6' },
-    { name: 'Remaining', value: 100 - data.overall_ipo_score, fill: '#E2E8F0' }
-  ]
 
   return (
     <div className="space-y-8">
@@ -197,9 +237,9 @@ export function AnalysisResults({ data }: AnalysisResultsProps) {
                     />
                     <YAxis domain={[0, 10]} />
                     <Tooltip 
-                      formatter={(value: any, name: any, props: any) => [
+                      formatter={(value: number, name: string, props: { payload?: { fullName: string } }) => [
                         `${value}/10`, 
-                        props.payload.fullName
+                        props.payload?.fullName || name
                       ]}
                     />
                     <Bar dataKey="score" radius={[4, 4, 0, 0]} />
@@ -222,7 +262,7 @@ export function AnalysisResults({ data }: AnalysisResultsProps) {
                 <div>
                   <h5 className="font-medium text-slate-800 mb-2">Key Highlights</h5>
                   <ul className="space-y-1">
-                    {data.executive_summary?.key_highlights?.slice(0, 3).map((highlight: string, index: number) => (
+                    {data.executive_summary?.key_highlights?.slice(0, 3).map((highlight, index: number) => (
                       <li key={index} className="flex items-start space-x-2 text-sm">
                         <CheckCircle2 className="h-4 w-4 text-green-600 mt-0.5 flex-shrink-0" />
                         <span className="text-slate-600">{highlight}</span>
@@ -245,7 +285,7 @@ export function AnalysisResults({ data }: AnalysisResultsProps) {
         {/* Detailed Criteria Tab */}
         <Tabs.Content value="criteria" className="mt-6">
           <div className="grid gap-6">
-            {data.criterion_scores?.map((criterion: any, index: number) => {
+            {data.criterion_scores?.map((criterion, index: number) => {
               const Icon = criteriaIcons[criterion.name as keyof typeof criteriaIcons] || Award
               return (
                 <div key={index} className="bg-white rounded-xl border border-slate-200 p-6">
@@ -277,7 +317,7 @@ export function AnalysisResults({ data }: AnalysisResultsProps) {
                     <div>
                       <h5 className="font-medium text-slate-800 mb-2">Strengths</h5>
                       <ul className="space-y-1">
-                        {criterion.strengths?.map((strength: string, idx: number) => (
+                        {criterion.strengths?.map((strength, idx: number) => (
                           <li key={idx} className="flex items-start space-x-2 text-sm">
                             <CheckCircle2 className="h-3 w-3 text-green-600 mt-1 flex-shrink-0" />
                             <span className="text-slate-600">{strength}</span>
@@ -289,7 +329,7 @@ export function AnalysisResults({ data }: AnalysisResultsProps) {
                     <div>
                       <h5 className="font-medium text-slate-800 mb-2">Areas for Improvement</h5>
                       <ul className="space-y-1">
-                        {criterion.weaknesses?.map((weakness: string, idx: number) => (
+                        {criterion.weaknesses?.map((weakness, idx: number) => (
                           <li key={idx} className="flex items-start space-x-2 text-sm">
                             <AlertTriangle className="h-3 w-3 text-amber-600 mt-1 flex-shrink-0" />
                             <span className="text-slate-600">{weakness}</span>
@@ -313,7 +353,7 @@ export function AnalysisResults({ data }: AnalysisResultsProps) {
                 <span>Key Risks</span>
               </h4>
               <div className="space-y-3">
-                {data.risk_assessment?.key_risks?.map((risk: string, index: number) => (
+                {data.risk_assessment?.key_risks?.map((risk, index: number) => (
                   <div key={index} className="flex items-start space-x-3 p-3 bg-red-50 rounded-lg">
                     <AlertTriangle className="h-4 w-4 text-red-600 mt-0.5 flex-shrink-0" />
                     <p className="text-sm text-red-800">{risk}</p>
@@ -328,7 +368,7 @@ export function AnalysisResults({ data }: AnalysisResultsProps) {
                 <span>Information Gaps</span>
               </h4>
               <div className="space-y-3">
-                {data.risk_assessment?.information_gaps?.map((gap: string, index: number) => (
+                {data.risk_assessment?.information_gaps?.map((gap, index: number) => (
                   <div key={index} className="flex items-start space-x-3 p-3 bg-amber-50 rounded-lg">
                     <FileText className="h-4 w-4 text-amber-600 mt-0.5 flex-shrink-0" />
                     <p className="text-sm text-amber-800">{gap}</p>
@@ -355,7 +395,7 @@ export function AnalysisResults({ data }: AnalysisResultsProps) {
                 <span>Questions for Next Meeting</span>
               </h4>
               <div className="space-y-3">
-                {data.follow_up_questions?.questions?.map((question: string, index: number) => (
+                {data.follow_up_questions?.questions?.map((question, index: number) => (
                   <div key={index} className="flex items-start space-x-3 p-4 bg-blue-50 rounded-lg">
                     <div className="bg-blue-100 text-blue-600 rounded-full p-1 mt-1 flex-shrink-0">
                       <span className="block w-2 h-2 rounded-full bg-current"></span>
@@ -372,7 +412,7 @@ export function AnalysisResults({ data }: AnalysisResultsProps) {
                 <span>Priority Areas</span>
               </h4>
               <div className="space-y-3">
-                {data.follow_up_questions?.priority_areas?.map((area: string, index: number) => (
+                {data.follow_up_questions?.priority_areas?.map((area, index: number) => (
                   <div key={index} className="flex items-start space-x-3 p-4 bg-green-50 rounded-lg">
                     <Target className="h-4 w-4 text-green-600 mt-0.5 flex-shrink-0" />
                     <p className="text-sm text-green-800">{area}</p>

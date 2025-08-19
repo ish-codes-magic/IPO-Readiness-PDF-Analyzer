@@ -79,7 +79,7 @@ class IPOAnalysisResponse(BaseModel):
     follow_up_questions: FollowUpQuestions = Field(..., description="Questions for next meeting")
     
     # Additional insights
-    financial_highlights: Dict[str, Any] = Field(default_factory=dict, description="Key financial metrics identified")
+    financial_highlights: FinancialMetrics = Field(..., description="Key financial metrics identified")
     competitive_positioning: str = Field(..., description="Assessment of competitive position")
     
     # Processing metadata

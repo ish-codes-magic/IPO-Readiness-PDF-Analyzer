@@ -1,14 +1,14 @@
 'use client'
 
 import { useCallback, useState } from 'react'
-import { useDropzone } from 'react-dropzone'
+import { useDropzone, FileRejection } from 'react-dropzone'
 import { Upload, FileText, X, AlertCircle } from 'lucide-react'
 import clsx from 'clsx'
 import { endpoints } from '@/lib/config'
 
 interface PDFUploaderProps {
   onAnalysisStart: () => void
-  onAnalysisComplete: (data: any) => void
+  onAnalysisComplete: (data: unknown) => void
   onError: (error: string) => void
 }
 
@@ -16,12 +16,12 @@ export function PDFUploader({ onAnalysisStart, onAnalysisComplete, onError }: PD
   const [selectedFile, setSelectedFile] = useState<File | null>(null)
   const [isUploading, setIsUploading] = useState(false)
 
-  const onDrop = useCallback((acceptedFiles: File[], rejectedFiles: any[]) => {
+  const onDrop = useCallback((acceptedFiles: File[], rejectedFiles: FileRejection[]) => {
     if (rejectedFiles.length > 0) {
       const rejection = rejectedFiles[0]
-      if (rejection.errors.some((e: any) => e.code === 'file-invalid-type')) {
+      if (rejection.errors.some((e) => e.code === 'file-invalid-type')) {
         onError('Please select a valid PDF file')
-      } else if (rejection.errors.some((e: any) => e.code === 'file-too-large')) {
+      } else if (rejection.errors.some((e) => e.code === 'file-too-large')) {
         onError('File size must be less than 20MB')
       } else {
         onError('File upload failed. Please try again.')
@@ -82,7 +82,7 @@ export function PDFUploader({ onAnalysisStart, onAnalysisComplete, onError }: PD
         if (!healthResponse.ok) {
           throw new Error('Backend server is not responding. Please make sure the backend is running.')
         }
-      } catch (healthError) {
+      } catch {
         throw new Error('Cannot connect to backend server. Please ensure the backend is running at http://localhost:8000')
       }
 
@@ -163,7 +163,7 @@ export function PDFUploader({ onAnalysisStart, onAnalysisComplete, onError }: PD
               </div>
             </div>
             <p className="text-sm text-green-700">
-              PDF ready for analysis. Click "Analyze Deck" to begin.
+              PDF ready for analysis. Click &quot;Analyze Deck&quot; to begin.
             </p>
           </div>
         ) : (
@@ -183,9 +183,9 @@ export function PDFUploader({ onAnalysisStart, onAnalysisComplete, onError }: PD
               )
             ) : (
               <div className="space-y-2">
-                <p className="text-lg font-medium text-slate-900">
-                  Drag & drop your pitch deck PDF here
-                </p>
+                            <p className="text-lg font-medium text-slate-900">
+              Drag &amp; drop your pitch deck PDF here
+            </p>
                 <p className="text-slate-600">or click to browse files</p>
                 <p className="text-sm text-slate-500">
                   Maximum file size: 20MB
@@ -242,7 +242,7 @@ export function PDFUploader({ onAnalysisStart, onAnalysisComplete, onError }: PD
             <div className="bg-blue-100 text-blue-600 rounded-full p-1 mt-0.5">
               <span className="block w-1.5 h-1.5 rounded-full bg-current"></span>
             </div>
-            <p>You'll receive detailed scores, insights, and actionable recommendations</p>
+            <p>You&apos;ll receive detailed scores, insights, and actionable recommendations</p>
           </div>
         </div>
       </div>

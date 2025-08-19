@@ -35,7 +35,7 @@ export function LoadingSpinner() {
   const [progress, setProgress] = useState(0)
 
   useEffect(() => {
-    let totalDuration = 0
+
     let currentDuration = 0
 
     const totalTime = loadingSteps.reduce((sum, step) => sum + step.duration, 0)
@@ -105,7 +105,7 @@ export function LoadingSpinner() {
           const Icon = step.icon
           const isActive = index === currentStep
           const isCompleted = index < currentStep
-          const isUpcoming = index > currentStep
+
 
           return (
             <div
