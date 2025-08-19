@@ -4,7 +4,7 @@ import { useCallback, useState } from 'react'
 import { useDropzone, FileRejection } from 'react-dropzone'
 import { Upload, FileText, X, AlertCircle } from 'lucide-react'
 import clsx from 'clsx'
-import { endpoints } from '@/lib/config'
+import { endpoints } from './../lib/config'
 
 interface PDFUploaderProps {
   onAnalysisStart: () => void
