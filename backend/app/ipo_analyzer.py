@@ -172,7 +172,7 @@ class IPOAnalyzer:
         
         try:
             # Use Instructor to get structured response
-            response = await self.model.create(
+            response = self.model.create(
                 messages=[{"role": "user", "content": prompt}],
                 response_model=StructuredAnalysis,
                 model="gemini-2.5-flash",

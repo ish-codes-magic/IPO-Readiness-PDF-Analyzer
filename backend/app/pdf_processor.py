@@ -56,7 +56,7 @@ class PDFProcessor:
         template_dir = "./prompts"
         self.jinja_env = Environment(loader=FileSystemLoader(template_dir))
     
-    def extract_content(self, pdf_path: str) -> Tuple[str, Dict[str, Any]]:
+    async def extract_content(self, pdf_path: str) -> Tuple[str, Dict[str, Any]]:
         """
         Extract structured content from PDF file using LlamaParse and Gemini LLM
         
@@ -82,10 +82,8 @@ class PDFProcessor:
             
             # Extract structured content using Gemini
             logger.info("Analyzing content with Gemini...")
-            extraction_result = self._extract_with_gemini_text(
-                full_text,
-                os.path.basename(pdf_path),
-                doc_info['page_count']
+            extraction_result = await self._extract_with_gemini_text(
+                full_text
             )
             
             logger.info("Successfully extracted content using LlamaParse + Gemini")
@@ -273,14 +271,12 @@ class PDFProcessor:
             logger.error(f"Error getting PDF info: {str(e)}")
             return {"page_count": 1, "metadata": {}, "is_encrypted": False, "file_size": 0}
     
-    async def _extract_with_gemini_text(self, text_content: str, filename: str, total_pages: int) -> Dict[str, Any]:
+    async def _extract_with_gemini_text(self, text_content: str) -> Dict[str, Any]:
         """
         Extract structured content using Gemini LLM with text input
         
         Args:
             text_content: Extracted text from LlamaParse
-            filename: Original filename
-            total_pages: Total number of pages
             
         Returns:
             PDFExtractionResult with structured content
@@ -289,8 +285,6 @@ class PDFProcessor:
             # Render the extraction prompt
             template = self.jinja_env.get_template("pdf_extraction_prompt.j2")
             prompt = template.render(
-                filename=filename,
-                total_pages=total_pages,
                 document_text=text_content
             )
             
@@ -298,7 +292,7 @@ class PDFProcessor:
             logger.info("Sending text to Gemini for structured analysis...")
             
             # Use instructor with async handling
-            response = await self.model.create(
+            response = self.model.create(
                     messages=[{
                         "role": "user", 
                         "content": prompt

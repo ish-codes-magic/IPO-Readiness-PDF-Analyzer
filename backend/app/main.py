@@ -77,7 +77,11 @@ async def analyze_pdf(file: UploadFile = File(...)):
         try:
             # Extract content from PDF
             logger.info(f"Processing PDF: {file.filename}")
-            full_text, extracted_content = pdf_processor.extract_content(temp_file_path)
+            full_text, extracted_content = await pdf_processor.extract_content(temp_file_path)
+            
+            print("Extracted content", extracted_content)
+            
+            print("Full text", full_text)
             
             # Analyze for IPO readiness
             logger.info("Analyzing IPO readiness")
@@ -85,6 +89,8 @@ async def analyze_pdf(file: UploadFile = File(...)):
                 content=full_text,
                 extracted_content=extracted_content
             )
+            
+            print("Analysis result", analysis_result)
             
             return analysis_result
             
