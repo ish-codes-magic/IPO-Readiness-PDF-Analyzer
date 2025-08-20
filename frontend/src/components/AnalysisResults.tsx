@@ -13,7 +13,8 @@ import {
   Users,
   DollarSign,
   Award,
-  Building
+  Building,
+  Calculator
 } from 'lucide-react'
 import { 
   RadialBarChart, 
@@ -139,14 +140,14 @@ export function AnalysisResults({ data }: AnalysisResultsProps) {
               <div className={`px-3 py-1 rounded-full border font-medium ${getReadinessColor(data.overall_ipo_score)}`}>
                 {data.readiness_level}
               </div>
-              <span className="text-sm text-slate-600">
+              <span className="text-sm text-slate-700">
                 Analyzed on {new Date(data.timestamp).toLocaleDateString()}
               </span>
             </div>
           </div>
           <div className="text-right">
             <div className="text-3xl font-bold text-slate-900">{Math.round(data.overall_ipo_score)}</div>
-            <div className="text-sm text-slate-600">/ 100</div>
+            <div className="text-sm text-slate-800">/ 100</div>
           </div>
         </div>
 
@@ -170,20 +171,16 @@ export function AnalysisResults({ data }: AnalysisResultsProps) {
             <h4 className="font-semibold text-slate-900 mb-3">Key Metrics</h4>
             <div className="space-y-3">
               <div className="flex justify-between items-center">
-                <span className="text-slate-600">Processing Time</span>
-                <span className="font-medium">{data.processing_time_seconds?.toFixed(1)}s</span>
+                <span className="text-slate-800">Processing Time</span>
+                <span className="font-medium text-slate-900">{data.processing_time_seconds?.toFixed(1)}s</span>
               </div>
               <div className="flex justify-between items-center">
-                <span className="text-slate-600">Confidence Level</span>
-                <span className="font-medium">{Math.round((data.confidence_score || 0) * 100)}%</span>
+                <span className="text-slate-800">Company</span>
+                <span className="font-medium text-slate-900">{data.company_metadata?.company_name || 'Not specified'}</span>
               </div>
               <div className="flex justify-between items-center">
-                <span className="text-slate-600">Company</span>
-                <span className="font-medium">{data.company_metadata?.company_name || 'Not specified'}</span>
-              </div>
-              <div className="flex justify-between items-center">
-                <span className="text-slate-600">Industry</span>
-                <span className="font-medium">{data.company_metadata?.industry || 'Not specified'}</span>
+                <span className="text-slate-800">Industry</span>
+                <span className="font-medium text-slate-900">{data.company_metadata?.industry || 'Not specified'}</span>
               </div>
             </div>
           </div>
@@ -197,6 +194,7 @@ export function AnalysisResults({ data }: AnalysisResultsProps) {
             { value: 'overview', label: 'Overview', icon: BarChart3 },
             { value: 'criteria', label: 'Detailed Scores', icon: Award },
             { value: 'insights', label: 'Insights & Risks', icon: AlertTriangle },
+            { value: 'financial', label: 'Key Financial Metrics', icon: Calculator },
             { value: 'recommendations', label: 'Recommendations', icon: CheckCircle2 }
           ].map(tab => {
             const Icon = tab.icon
@@ -254,7 +252,7 @@ export function AnalysisResults({ data }: AnalysisResultsProps) {
               <div className="space-y-4">
                 <div>
                   <h5 className="font-medium text-slate-800 mb-2">Overall Assessment</h5>
-                  <p className="text-slate-600 text-sm leading-relaxed">
+                  <p className="text-slate-800 text-sm leading-relaxed">
                     {data.executive_summary?.overall_assessment || 'Assessment not available'}
                   </p>
                 </div>
@@ -265,7 +263,7 @@ export function AnalysisResults({ data }: AnalysisResultsProps) {
                     {data.executive_summary?.key_highlights?.slice(0, 3).map((highlight, index: number) => (
                       <li key={index} className="flex items-start space-x-2 text-sm">
                         <CheckCircle2 className="h-4 w-4 text-green-600 mt-0.5 flex-shrink-0" />
-                        <span className="text-slate-600">{highlight}</span>
+                        <span className="text-slate-800">{highlight}</span>
                       </li>
                     )) || []}
                   </ul>
@@ -273,7 +271,7 @@ export function AnalysisResults({ data }: AnalysisResultsProps) {
 
                 <div>
                   <h5 className="font-medium text-slate-800 mb-2">Recommendation</h5>
-                  <p className="text-slate-600 text-sm leading-relaxed">
+                  <p className="text-slate-800 text-sm leading-relaxed">
                     {data.executive_summary?.recommendation || 'Recommendation not available'}
                   </p>
                 </div>
@@ -309,7 +307,7 @@ export function AnalysisResults({ data }: AnalysisResultsProps) {
                   <div className="grid md:grid-cols-3 gap-4">
                     <div>
                       <h5 className="font-medium text-slate-800 mb-2">Rationale</h5>
-                      <p className="text-sm text-slate-600 leading-relaxed">
+                      <p className="text-sm text-slate-800 leading-relaxed">
                         {criterion.rationale}
                       </p>
                     </div>
@@ -320,7 +318,7 @@ export function AnalysisResults({ data }: AnalysisResultsProps) {
                         {criterion.strengths?.map((strength, idx: number) => (
                           <li key={idx} className="flex items-start space-x-2 text-sm">
                             <CheckCircle2 className="h-3 w-3 text-green-600 mt-1 flex-shrink-0" />
-                            <span className="text-slate-600">{strength}</span>
+                            <span className="text-slate-800">{strength}</span>
                           </li>
                         ))}
                       </ul>
@@ -332,7 +330,7 @@ export function AnalysisResults({ data }: AnalysisResultsProps) {
                         {criterion.weaknesses?.map((weakness, idx: number) => (
                           <li key={idx} className="flex items-start space-x-2 text-sm">
                             <AlertTriangle className="h-3 w-3 text-amber-600 mt-1 flex-shrink-0" />
-                            <span className="text-slate-600">{weakness}</span>
+                            <span className="text-slate-800">{weakness}</span>
                           </li>
                         ))}
                       </ul>
@@ -380,9 +378,95 @@ export function AnalysisResults({ data }: AnalysisResultsProps) {
 
           <div className="bg-white rounded-xl border border-slate-200 p-6 mt-6">
             <h4 className="font-semibold text-slate-900 mb-4">Competitive Positioning</h4>
-            <p className="text-slate-600 leading-relaxed">
+            <p className="text-slate-800 leading-relaxed">
               {data.competitive_positioning}
             </p>
+          </div>
+        </Tabs.Content>
+
+        {/* Financial Metrics Tab */}
+        <Tabs.Content value="financial" className="mt-6">
+          <div className="bg-white rounded-xl border border-slate-200 p-6">
+            <h4 className="font-semibold text-slate-900 mb-6 flex items-center space-x-2">
+              <Calculator className="h-5 w-5 text-blue-600" />
+              <span>Key Financial Metrics</span>
+            </h4>
+            
+            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {/* Revenue */}
+              <div className="bg-gradient-to-br from-blue-50 to-blue-100 p-4 rounded-lg border border-blue-200">
+                <div className="flex items-center space-x-2 mb-2">
+                  <DollarSign className="h-5 w-5 text-blue-600" />
+                  <h5 className="font-semibold text-blue-900">Revenue</h5>
+                </div>
+                <p className="text-blue-800 text-sm">{data.financial_highlights?.revenue || 'N/A'}</p>
+              </div>
+
+              {/* Profit */}
+              <div className="bg-gradient-to-br from-green-50 to-green-100 p-4 rounded-lg border border-green-200">
+                <div className="flex items-center space-x-2 mb-2">
+                  <TrendingUp className="h-5 w-5 text-green-600" />
+                  <h5 className="font-semibold text-green-900">Profit/Loss</h5>
+                </div>
+                <p className="text-green-800 text-sm">{data.financial_highlights?.profit || 'N/A'}</p>
+              </div>
+
+              {/* Growth Rate */}
+              <div className="bg-gradient-to-br from-purple-50 to-purple-100 p-4 rounded-lg border border-purple-200">
+                <div className="flex items-center space-x-2 mb-2">
+                  <BarChart3 className="h-5 w-5 text-purple-600" />
+                  <h5 className="font-semibold text-purple-900">Growth Rate</h5>
+                </div>
+                <p className="text-purple-800 text-sm">{data.financial_highlights?.growth_rate || 'N/A'}</p>
+              </div>
+
+              {/* Funding Raised */}
+              <div className="bg-gradient-to-br from-amber-50 to-amber-100 p-4 rounded-lg border border-amber-200">
+                <div className="flex items-center space-x-2 mb-2">
+                  <Building className="h-5 w-5 text-amber-600" />
+                  <h5 className="font-semibold text-amber-900">Funding Raised</h5>
+                </div>
+                <p className="text-amber-800 text-sm">{data.financial_highlights?.funding_raised || 'N/A'}</p>
+              </div>
+
+              {/* Valuation */}
+              <div className="bg-gradient-to-br from-indigo-50 to-indigo-100 p-4 rounded-lg border border-indigo-200">
+                <div className="flex items-center space-x-2 mb-2">
+                  <Award className="h-5 w-5 text-indigo-600" />
+                  <h5 className="font-semibold text-indigo-900">Valuation</h5>
+                </div>
+                <p className="text-indigo-800 text-sm">{data.financial_highlights?.valuation || 'N/A'}</p>
+              </div>
+
+              {/* Burn Rate */}
+              <div className="bg-gradient-to-br from-red-50 to-red-100 p-4 rounded-lg border border-red-200">
+                <div className="flex items-center space-x-2 mb-2">
+                  <AlertTriangle className="h-5 w-5 text-red-600" />
+                  <h5 className="font-semibold text-red-900">Burn Rate</h5>
+                </div>
+                <p className="text-red-800 text-sm">{data.financial_highlights?.burn_rate || 'N/A'}</p>
+              </div>
+
+              {/* Runway */}
+              <div className="bg-gradient-to-br from-teal-50 to-teal-100 p-4 rounded-lg border border-teal-200">
+                <div className="flex items-center space-x-2 mb-2">
+                  <Target className="h-5 w-5 text-teal-600" />
+                  <h5 className="font-semibold text-teal-900">Financial Runway</h5>
+                </div>
+                <p className="text-teal-800 text-sm">{data.financial_highlights?.runway || 'N/A'}</p>
+              </div>
+
+              {/* Other Metrics */}
+              {data.financial_highlights?.other_metrics && data.financial_highlights.other_metrics !== 'N/A' && (
+                <div className="bg-gradient-to-br from-gray-50 to-gray-100 p-4 rounded-lg border border-gray-200 md:col-span-2 lg:col-span-3">
+                  <div className="flex items-center space-x-2 mb-2">
+                    <Calculator className="h-5 w-5 text-gray-600" />
+                    <h5 className="font-semibold text-gray-900">Other Financial Metrics</h5>
+                  </div>
+                  <p className="text-gray-800 text-sm">{data.financial_highlights.other_metrics}</p>
+                </div>
+              )}
+            </div>
           </div>
         </Tabs.Content>
 
