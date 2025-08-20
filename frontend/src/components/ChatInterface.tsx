@@ -29,12 +29,19 @@ interface ChatInterfaceProps {
   className?: string
 }
 
+// Global conversation storage to persist across tab switches
+const conversationStorage: Record<string, {
+  messages: Message[]
+  conversationId: string | null
+}> = {}
+
 export function ChatInterface({ analysisId, companyName, className }: ChatInterfaceProps) {
   const [messages, setMessages] = useState<Message[]>([])
   const [inputMessage, setInputMessage] = useState('')
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [conversationId, setConversationId] = useState<string | null>(null)
+  const [isInitialized, setIsInitialized] = useState(false)
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLInputElement>(null)
 
@@ -47,16 +54,38 @@ export function ChatInterface({ analysisId, companyName, className }: ChatInterf
   }, [messages])
 
   useEffect(() => {
-    // Add welcome message
-    const welcomeMessage: Message = {
-      id: 'welcome',
-      role: 'assistant',
-      content: `${API_CONFIG.chat.welcomeMessage} I have access to the complete analysis for ${companyName || 'your company'} and can answer any questions about the IPO readiness assessment, financial highlights, risks, recommendations, and more. What would you like to know?`,
-      timestamp: new Date().toISOString(),
-      sources_referenced: []
+    // Load existing conversation or create new one
+    if (!isInitialized && analysisId) {
+      const stored = conversationStorage[analysisId]
+      
+      if (stored && stored.messages.length > 0) {
+        // Restore existing conversation
+        setMessages(stored.messages)
+        setConversationId(stored.conversationId)
+      } else {
+        // Create welcome message for new conversation
+        const welcomeMessage: Message = {
+          id: 'welcome',
+          role: 'assistant',
+          content: `${API_CONFIG.chat.welcomeMessage} I have access to the complete analysis for ${companyName || 'your company'} and can answer any questions about the IPO readiness assessment, financial highlights, risks, recommendations, and more. What would you like to know?`,
+          timestamp: new Date().toISOString(),
+          sources_referenced: []
+        }
+        setMessages([welcomeMessage])
+      }
+      setIsInitialized(true)
     }
-    setMessages([welcomeMessage])
-  }, [companyName])
+  }, [analysisId, companyName, isInitialized])
+
+  // Save conversation to storage whenever messages change
+  useEffect(() => {
+    if (isInitialized && analysisId && messages.length > 0) {
+      conversationStorage[analysisId] = {
+        messages,
+        conversationId
+      }
+    }
+  }, [messages, conversationId, analysisId, isInitialized])
 
   const sendMessage = async () => {
     if (!inputMessage.trim() || isLoading) return
@@ -137,6 +166,11 @@ export function ChatInterface({ analysisId, companyName, className }: ChatInterf
     setMessages([welcomeMessage])
     setConversationId(null)
     setError(null)
+    
+    // Clear from storage as well
+    if (analysisId) {
+      delete conversationStorage[analysisId]
+    }
   }
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
@@ -151,6 +185,39 @@ export function ChatInterface({ analysisId, companyName, className }: ChatInterf
       hour: '2-digit', 
       minute: '2-digit' 
     })
+  }
+
+  const formatMarkdown = (text: string) => {
+    // Simple markdown formatting
+    let formatted = text
+      // Bold text
+      .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+      // Headers
+      .replace(/^### (.*$)/gm, '<h3 class="text-base font-semibold text-slate-900 mt-3 mb-2">$1</h3>')
+      .replace(/^## (.*$)/gm, '<h2 class="text-lg font-semibold text-slate-900 mt-4 mb-2">$1</h2>')
+      .replace(/^# (.*$)/gm, '<h1 class="text-xl font-bold text-slate-900 mt-4 mb-3">$1</h1>')
+      // Numbered lists
+      .replace(/^\d+\.\s(.*)$/gm, '<li class="ml-4 text-slate-900">$1</li>')
+      // Bullet points
+      .replace(/^[-*]\s(.*)$/gm, '<li class="ml-4 text-slate-900">$1</li>')
+      // Line breaks
+      .replace(/\n\n/g, '</p><p class="text-slate-900 mb-2">')
+      .replace(/\n/g, '<br>')
+    
+    // Wrap in paragraph tags if not already wrapped
+    if (!formatted.includes('<h') && !formatted.includes('<li>')) {
+      formatted = `<p class="text-slate-900 mb-2">${formatted}</p>`
+    } else {
+      // Wrap loose text in paragraphs
+      formatted = formatted.replace(/^([^<].*?)(?=<|$)/gm, '<p class="text-slate-900 mb-2">$1</p>')
+    }
+    
+    // Wrap lists in ul tags
+    if (formatted.includes('<li>')) {
+      formatted = formatted.replace(/(<li>.*?<\/li>)/g, '<ul class="list-disc list-inside mb-2 space-y-1">$1</ul>')
+    }
+    
+    return formatted
   }
 
   return (
@@ -218,7 +285,14 @@ export function ChatInterface({ analysisId, companyName, className }: ChatInterf
                   ? 'bg-blue-600 text-white rounded-br-md'
                   : 'bg-slate-100 text-slate-900 rounded-bl-md'
               )}>
-                <p className="text-sm whitespace-pre-wrap">{message.content}</p>
+                {message.role === 'assistant' ? (
+                  <div 
+                    className="text-sm prose prose-slate max-w-none prose-headings:text-slate-900 prose-p:text-slate-900 prose-strong:text-slate-900 prose-li:text-slate-900"
+                    dangerouslySetInnerHTML={{ __html: formatMarkdown(message.content) }}
+                  />
+                ) : (
+                  <p className="text-sm whitespace-pre-wrap text-white">{message.content}</p>
+                )}
               </div>
               
               {/* Message metadata */}
@@ -289,7 +363,7 @@ export function ChatInterface({ analysisId, companyName, className }: ChatInterf
               onKeyPress={handleKeyPress}
               placeholder="Ask about the IPO analysis..."
               maxLength={API_CONFIG.chat.maxMessageLength}
-              className="w-full px-4 py-3 pr-12 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none text-sm"
+              className="w-full px-4 py-3 pr-12 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none text-sm text-black"
               disabled={isLoading}
             />
           </div>

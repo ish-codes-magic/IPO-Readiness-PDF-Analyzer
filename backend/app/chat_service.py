@@ -176,7 +176,7 @@ Summary: {conversation.summary.summary_text}
                 contents=prompt,
                 config={
                     "temperature": 0.3,
-                    "max_output_tokens": 1000,
+                    "max_output_tokens": 8000,
                 }
             )
             

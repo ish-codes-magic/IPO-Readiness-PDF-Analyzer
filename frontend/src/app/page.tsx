@@ -93,9 +93,9 @@ export default function Home() {
                   <BarChart3 className="h-4 w-4" />
                   <span>IPO Scoring</span>
                 </div>
-                <div className="flex items-center space-x-2 text-sm text-slate-400">
+                <div className="flex items-center space-x-2 text-sm text-slate-600">
                   <MessageSquare className="h-4 w-4" />
-                  <span>Chat (Coming Soon)</span>
+                  <span>Chat</span>
                 </div>
               </div>
             </div>
@@ -203,21 +203,7 @@ export default function Home() {
           </div>
         )}
 
-        {/* Chat Interface Placeholder */}
-        {analysisData && (
-          <div className="mt-12 max-w-4xl mx-auto">
-            <div className="bg-white rounded-xl border border-slate-200 p-8 text-center">
-              <MessageSquare className="h-12 w-12 text-slate-400 mx-auto mb-4" />
-              <h3 className="text-xl font-semibold text-slate-900 mb-2">Interactive Chat</h3>
-              <p className="text-slate-600 mb-4">
-                Ask questions about your analysis, request modifications, or get deeper insights.
-              </p>
-              <div className="bg-slate-50 rounded-lg p-4 text-sm text-slate-500">
-                Chat feature coming soon...
-              </div>
-            </div>
-          </div>
-        )}
+
       </main>
 
       {/* Footer */}
