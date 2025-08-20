@@ -29,6 +29,7 @@ import {
 } from 'recharts'
 import * as Tabs from '@radix-ui/react-tabs'
 import clsx from 'clsx'
+import { ChatInterface } from './ChatInterface'
 
 interface AnalysisResultsProps {
   data: {
@@ -195,7 +196,8 @@ export function AnalysisResults({ data }: AnalysisResultsProps) {
             { value: 'criteria', label: 'Detailed Scores', icon: Award },
             { value: 'insights', label: 'Insights & Risks', icon: AlertTriangle },
             { value: 'financial', label: 'Key Financial Metrics', icon: Calculator },
-            { value: 'recommendations', label: 'Recommendations', icon: CheckCircle2 }
+            { value: 'recommendations', label: 'Recommendations', icon: CheckCircle2 },
+            { value: 'chat', label: 'Ask Questions', icon: MessageSquare }
           ].map(tab => {
             const Icon = tab.icon
             return (
@@ -505,6 +507,15 @@ export function AnalysisResults({ data }: AnalysisResultsProps) {
               </div>
             </div>
           </div>
+        </Tabs.Content>
+
+        {/* Chat Tab */}
+        <Tabs.Content value="chat" className="mt-6">
+          <ChatInterface 
+            analysisId={data.analysis_id || 'unknown'}
+            companyName={data.company_metadata?.company_name}
+            className="h-[700px]"
+          />
         </Tabs.Content>
       </Tabs.Root>
     </div>
