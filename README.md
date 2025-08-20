@@ -133,8 +133,9 @@ IPO-Readiness-PDF-Analyzer/
 
 #### Backend (.env)
 ```env
-GEMINI_API_KEY=your_gemini_api_key_here
-CORS_ORIGINS=http://localhost:3000
+GEMINI_API_KEY="YOUR_GEMINI_API_KEY"
+LLAMA_CLOUD_API_KEY="YOUR_LLAMA_CLOUD_API_KEY"
+CORS_ORIGINS=your-frontend-url
 HOST=0.0.0.0
 PORT=8000
 DEBUG=false
@@ -142,7 +143,7 @@ DEBUG=false
 
 #### Frontend (.env.local)
 ```env
-NEXT_PUBLIC_API_URL=http://localhost:8000
+NEXT_PUBLIC_API_URL=your-backend-url
 ```
 
 ## 📊 Usage
@@ -150,8 +151,7 @@ NEXT_PUBLIC_API_URL=http://localhost:8000
 1. **Upload PDF**: Drag and drop your pitch deck PDF or click to browse
 2. **Analysis**: The system will extract content and analyze across 8 criteria
 3. **Results**: View comprehensive scoring, insights, and recommendations
-4. **Export**: Download detailed reports (coming soon)
-5. **Chat**: Ask questions about the analysis (coming soon)
+4. **Chat**: Ask questions about the analysis 
 
 ## 🔧 API Endpoints
 
@@ -192,35 +192,8 @@ NEXT_PUBLIC_API_URL=http://localhost:8000
 2. **Configure environment variables**
 3. **Deploy using Docker or direct Python deployment**
 
-## 🤝 Contributing
-
-1. Fork the repository
-2. Create a feature branch
-3. Make your changes
-4. Add tests if applicable
-5. Submit a pull request
-
 ## 📄 License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
-## 🆘 Support
-
-For support and questions:
-- Create an issue in the GitHub repository
-- Check the documentation
-- Review the API endpoints
-
-## 🔮 Roadmap
-
-- [ ] Interactive chat interface for Q&A
-- [ ] Secondary research integration
-- [ ] Report export functionality
-- [ ] Multi-language support
-- [ ] Advanced visualization options
-- [ ] Batch processing capabilities
-- [ ] Integration with CRM systems
-
 ---
-
-**Built with ❤️ for better investment decision making**
